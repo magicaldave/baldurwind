@@ -39,15 +39,25 @@ local function setNextInTurnOrder()
   table.insert(combatants, table.remove(combatants, 1))
 end
 
+local function removeFromTurnOrder(actor)
+  if not actor then return end
+  table.remove(combatants, findEnemyCombatantIndex(actor))
+  print("Removed " .. actor.recordId .. " from combatants table")
+end
+
+local function startNextTurn()
+  combatants[1]:sendEvent('isMyTurn')
+  print("Sending Turn Init to: " .. combatants[1].recordId)
+end
+
 local function switchTurn(endTurnData)
   print("Combatants table prior to turn shift: \n" .. aux_util.deepToString(combatants, 2))
   setNextInTurnOrder()
   print("Combatants table after turn shift: \n" .. aux_util.deepToString(combatants, 2))
   -- This is dumb, and could potentially break if another actor enters combat whilst one is taking a turn
   -- I think?
-  if combatants[1] == endTurnData.lastActor then setNextInTurnOrder() end
-  print("Sending Turn Init to: " .. combatants[1].recordId)
-  combatants[1]:sendEvent('isMyTurn')
+  -- if combatants[1] == endTurnData.lastActor then setNextInTurnOrder() end
+  startNextTurn()
 end
 
 local function notifyActorTurnOrderChanged(actor, state)
