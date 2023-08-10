@@ -1,0 +1,5 @@
+GLOBAL: scripts/baldurwind/main.lua
+
+PLAYER: scripts/baldurwind/player.lua
+
+NPC: scripts/baldurwind/npc.lua
