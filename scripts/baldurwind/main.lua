@@ -8,7 +8,12 @@ local aux_util = require('openmw_aux.util')
 -- for now creatures are not technically affected though.
 -- How do we determine combatants?
 
+local debug = true
+
 local combatants = {}
+local function debugMePls(message)
+  if debug and message then print(message) end
+end
 
 local function getPlayer()
   for _, ref in ipairs(world.activeActors) do
@@ -47,47 +52,34 @@ end
 
 local function startNextTurn()
   combatants[1]:sendEvent('isMyTurn')
-  print("Sending Turn Init to: " .. combatants[1].recordId)
+  debugMePls("Sending Turn Init to: " .. combatants[1].recordId)
 end
 
-local function switchTurn(endTurnData)
-  print("Combatants table prior to turn shift: \n" .. aux_util.deepToString(combatants, 2))
+local function switchTurn()
+  debugMePls("Combatants table prior to turn shift: \n" .. aux_util.deepToString(combatants, 2))
   setNextInTurnOrder()
-  print("Combatants table after turn shift: \n" .. aux_util.deepToString(combatants, 2))
-  -- This is dumb, and could potentially break if another actor enters combat whilst one is taking a turn
-  -- I think?
-  -- if combatants[1] == endTurnData.lastActor then setNextInTurnOrder() end
+  debugMePls("Combatants table after turn shift: \n" .. aux_util.deepToString(combatants, 2))
   startNextTurn()
-end
-
-local function notifyActorTurnOrderChanged(actor, state)
-  if state == "added" then
-    print(actor.recordId .. " has joined the fight!")
-  elseif state == "removed" then
-    print(actor.recordId .. " is no longer in the fight!")
-  end
 end
 
 local function declareFightStart(enemyInfo)
   getPlayer():sendEvent('declareFight', enemyInfo.ai)
-  print("Combatants table prior to adding actor: \n" .. aux_util.deepToString(combatants, 2))
+
+  debugMePls("Combatants table prior to adding actor: \n" .. aux_util.deepToString(combatants, 2))
 
   -- Newly added actors will take their turns first, so let's put them at the top. Otherwise,
   -- They take two turns when the turn shift occurs.
   table.insert(combatants, 1, enemyInfo.origin)
-  print("Combatants table after adding actor: \n" .. aux_util.deepToString(combatants, 2))
-  notifyActorTurnOrderChanged(enemyInfo.origin, "added")
+
+  debugMePls("Combatants table after adding actor: \n" .. aux_util.deepToString(combatants, 2))
+
 end
 
 local function combatantDied(actor)
-  -- When the actor dies, remove them from turn order.
-  -- The player themselves should generate an `endTurn` event when the actor is killed.
-  -- Do they die first, or does your turn end first?
   -- The actor should remove themselves from turn order, first.
   removeFromTurnOrder(actor)
   -- Then process the next turn.
-
-  -- Only terminate combat, if there are no enemies to keep fighting!
+  -- Unless there are no enemies to keep fighting!
   if hasActiveEnemyCombatants() then startNextTurn() return end
 
   getPlayer():sendEvent('declareFightEnd')
@@ -95,7 +87,8 @@ end
 
 local function initializeCombatants(player)
   table.insert(combatants, player)
-  notifyActorTurnOrderChanged(player, "added")
+  -- I suppose this is where, on load, we should figure out whether a fight was in progress or not.
+  -- That'll be fun.
 end
 
 return {
@@ -111,7 +104,6 @@ return {
       endTurn = switchTurn,
       -- onLoad = initializeCombatants,
       combatInitiated = declareFightStart,
-      endedCombat = declareFightEnd,
       combatantDied = combatantDied
     }
 }

@@ -4,8 +4,6 @@ local inputLib = require('openmw.input')
 local types = require('openmw.types')
 local self = require('openmw.self')
 local async = require('openmw.async')
--- local control = require('openmw.interfaces').Controls
--- local ext = require('openmw.interfaces')
 
 local lastTarget
 local isMyTurn = true
@@ -17,8 +15,6 @@ local didAttack = false
 local attackDelayTimer = 0.3
 local timeSinceAttack = 0
 local attributes = types.Actor.stats.attributes
-
-
 
 local function startAttack()
   self.controls.use = 1
@@ -112,8 +108,6 @@ local function startAttackEvent()
   if debug then uiLib.showMessage("Initiating attack!") end
 
   if debug then uiLib.showMessage("Current attack delay is: " .. currentTurnAttackDelay) end
-
-  -- timed attacks seem to be able to trigger this timer twice. (FIXED, I THINK)
   endAttackEvent(currentTurnAttackDelay)
 end
 
@@ -159,14 +153,13 @@ end
 
 local function declareFight(origin)
   isInCombat = true
-  -- Force loss of combat controls when a fight begins
-  -- I guess maybe this will still work, given the attacker should indicate their turn has ended?
-  print(isMyTurn)
   --[[
     perhaps later we should add the ability to do a reaction roll; the origin is already being provided
     So there shouldn't be any issue in comparing the two actor stats and taking turn
     priority over them in some cases.
   ]]--
+
+  -- Force loss of combat controls when a fight begins
   switchControls(false)
 
   if not debug then return end
@@ -188,12 +181,6 @@ local function onFrame(dt)
   timeSinceAttack = timeSinceAttack + dt
 end
 
-local function genericDebugMessage(message)
-  if not message then return end
-
-  uiLib.showMessage(message)
-end
-
 return {
   interfaceName = "s3turnsplayer",
   interface = {
@@ -201,14 +188,12 @@ return {
   },
   engineHandlers = {
     onInputAction = inputManager,
-    onFrame = onFrame,
-    -- onLoad = inputLib.setControlSwitch(inputLib.CONTROL_SWITCH.Fighting, false)
+    onFrame = onFrame
   },
   eventHandlers = {
     isMyTurn = initiateCombat,
     notMyTurn = playerEndTurn,
     declareFight = declareFight,
-    declareFightEnd = declareFightEnd,
-    genericDebugMessage = genericDebugMessage
+    declareFightEnd = declareFightEnd
   }
 }
