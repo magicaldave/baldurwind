@@ -169,8 +169,7 @@ local function declareFight(origin)
                     .. " and is targeting " .. origin.aiTarget.recordId .. "!")
 end
 
-local function declareFightEnd(combatant)
-  if debug then uiLib.showMessage(combatant.recordId .. " is no longer fighting!") end
+local function declareFightEnd()
   isInCombat = false
   beginTurn()
 end
