@@ -56,8 +56,9 @@ local function wasKilled()
 
   if health > 0 then return false end
 
-  core.sendGlobalEvent('endedCombat', {lastActor = self.object, reason = "dead"})
-  core.sendGlobalEvent('endTurn', {lastActor = self.object, reason = "endTurn"})
+  core.sendGlobalEvent('combatantDied', self.object)
+  -- core.sendGlobalEvent('endedCombat', {lastActor = self.object, reason = "dead"})
+  -- core.sendGlobalEvent('endTurn', {lastActor = self.object, reason = "endTurn"})
 
   hasDied = true
 
@@ -68,24 +69,24 @@ local function doAttack(dt)
   if not isMyTurn then return end
 
   local aiData = isInCombat()
-  print("Checking aiData")
+  -- print("Checking aiData")
 
   if not aiData or wasKilled() then return end
 
   checkCombatTarget(aiData)
-  print("checking combat target")
+  -- print("checking combat target")
 
   -- migrate into a separate function for turn processing
 
   local attackState = self.controls.use
 
   if attackState == 1 then
-    print(self.recordId .. " did attack this turn")
+    -- print(self.recordId .. " did attack this turn")
     didAttack = true
     return
   end
 
-  print("Checking if Didattack")
+  -- print("Checking if Didattack")
 
   if not didAttack then return end
 
@@ -93,7 +94,7 @@ local function doAttack(dt)
   didAttack = false
   isMyTurn = false
   core.sendGlobalEvent('endTurn', {lastActor = self.object, reason = "endTurn"})
-  print("terminating turn")
+  -- print("terminating turn")
 
 end
 

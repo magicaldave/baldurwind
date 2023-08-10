@@ -71,22 +71,26 @@ end
 local function declareFightStart(enemyInfo)
   getPlayer():sendEvent('declareFight', enemyInfo.ai)
   print("Combatants table prior to adding actor: \n" .. aux_util.deepToString(combatants, 2))
-  table.insert(combatants, enemyInfo.origin)
+
+  -- Newly added actors will take their turns first, so let's put them at the top. Otherwise,
+  -- They take two turns when the turn shift occurs.
+  table.insert(combatants, 1, enemyInfo.origin)
   print("Combatants table after adding actor: \n" .. aux_util.deepToString(combatants, 2))
   notifyActorTurnOrderChanged(enemyInfo.origin, "added")
 end
 
-local function declareFightEnd(combatant)
-  table.remove(combatants, findEnemyCombatantIndex(combatant.lastActor))
-  print("Removed " .. combatant.lastActor.recordId .. " from combatants table")
+local function combatantDied(actor)
+  -- When the actor dies, remove them from turn order.
+  -- The player themselves should generate an `endTurn` event when the actor is killed.
+  -- Do they die first, or does your turn end first?
+  -- The actor should remove themselves from turn order, first.
+  removeFromTurnOrder(actor)
+  -- Then process the next turn.
 
   -- Only terminate combat, if there are no enemies to keep fighting!
-  if hasActiveEnemyCombatants() then
-    -- switchTurn(combatant)
-    return
-  end
+  if hasActiveEnemyCombatants() then startNextTurn() return end
 
-  getPlayer():sendEvent('declareFightEnd', combatant.lastActor)
+  getPlayer():sendEvent('declareFightEnd')
 end
 
 local function initializeCombatants(player)
@@ -107,6 +111,7 @@ return {
       endTurn = switchTurn,
       -- onLoad = initializeCombatants,
       combatInitiated = declareFightStart,
-      endedCombat = declareFightEnd
+      endedCombat = declareFightEnd,
+      combatantDied = combatantDied
     }
 }
