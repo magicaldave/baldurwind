@@ -40,6 +40,11 @@ local function isInCombat()
 
   if not currentPackage or currentPackage.type ~= "Combat" then return false end
 
+  if not types.Actor.canMove(self) then
+    endTurn()
+    return false
+  end
+
   return currentPackage
 end
 
