@@ -22,6 +22,17 @@ local function getPlayer()
 
 end
 
+local function startTurn()
+  self:enableAI(true)
+  isMyTurn = true
+end
+
+local function endTurn()
+  self:enableAI(false)
+  isMyTurn = false
+  core.sendGlobalEvent('endTurn', {lastActor = self.object, reason = "endTurn"})
+end
+
 local function isInCombat()
   local currentPackage = ai.getActivePackage(self)
 
