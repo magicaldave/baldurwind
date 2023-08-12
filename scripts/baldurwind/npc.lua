@@ -70,7 +70,7 @@ local function wasKilled()
 
   local health = types.Actor.stats.dynamic["health"](self).current
 
-  if health > 0 then return false end
+  if health > 0 or not hasStartedCombat then return false end
 
   core.sendGlobalEvent('combatantDied', self.object)
 
