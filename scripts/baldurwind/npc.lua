@@ -84,7 +84,7 @@ local function doAttack(dt)
 
   local aiData = isInCombat()
 
-  if not aiData or wasKilled() then return end
+  if wasKilled() or not aiData then return end
 
   checkCombatTarget(aiData)
 
@@ -99,16 +99,9 @@ local function doAttack(dt)
 
   if not didAttack then return end
 
-  self:enableAI(false)
   didAttack = false
-  isMyTurn = false
-  core.sendGlobalEvent('endTurn', {lastActor = self.object, reason = "endTurn"})
+  endTurn()
 
-end
-
-local function startTurn()
-  self:enableAI(true)
-  isMyTurn = true
 end
 
 return {
