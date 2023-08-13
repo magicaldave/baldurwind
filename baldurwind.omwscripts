@@ -2,4 +2,4 @@ GLOBAL: scripts/baldurwind/main.lua
 
 PLAYER: scripts/baldurwind/player.lua
 
-NPC: scripts/baldurwind/npc.lua
+NPC, CREATURE: scripts/baldurwind/npc.lua
