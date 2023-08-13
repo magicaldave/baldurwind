@@ -15,6 +15,7 @@ local didAttack = false
 local attackDelayTimer = 0.3
 local timeSinceAttack = 0
 local attributes = types.Actor.stats.attributes
+local attackDelayTimerUpperRange = 150
 
 local function startAttack()
   self.controls.use = 1
@@ -95,7 +96,7 @@ local function startAttackEvent()
   startAttack()
 
   -- ranged/magic should have a much longer timer, so they're able to properly hit the target
-  local currentTurnAttackDelay = attackDelayTimer + (math.random(1, 15) / 100)
+  local currentTurnAttackDelay = attackDelayTimer + (math.random(1, attackDelayTimerUpperRange) / 100)
 
   -- Ranged weapons shouldn't have timed attacks
   if canTimedAttack then handleTimedAttack(currentTurnAttackDelay) end
