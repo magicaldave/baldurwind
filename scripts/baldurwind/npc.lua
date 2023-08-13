@@ -9,6 +9,7 @@ local didAttack = false
 local hasStartedCombat = false
 local hasDied = false
 local isMyTurn = true
+local combatants = {}
 
 -- end their turn if not types.Actor.canMove(self)
 
@@ -22,7 +23,8 @@ local function getPlayer()
 
 end
 
-local function startTurn()
+local function startTurn(combatants)
+  combatants = combatants
   self:enableAI(true)
   isMyTurn = true
 end
@@ -46,6 +48,7 @@ local function isInCombat()
   end
 
   return currentPackage
+
 end
 
 local function checkCombatTarget(aiData)
