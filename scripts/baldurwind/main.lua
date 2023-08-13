@@ -2,18 +2,13 @@ local world = require('openmw.world')
 local types = require('openmw.types')
 local async = require('openmw.async')
 local aux_util = require('openmw_aux.util')
+local common = require('scripts.baldurwind.common')
 
 --table including all actors in combat
 -- start with npcs, and players
 -- for now creatures are not technically affected though.
 -- How do we determine combatants?
-
-local debug = true
-
 local combatants = {}
-local function debugMePls(message)
-  if debug and message then print(message) end
-end
 
 local function getPlayer()
   for _, ref in ipairs(world.activeActors) do
@@ -45,33 +40,34 @@ local function setNextInTurnOrder()
 end
 
 local function removeFromTurnOrder(actor)
-  if not actor then return end
+  if not actor or actor.type == types.Player then return end
   table.remove(combatants, findEnemyCombatantIndex(actor))
-  print("Removed " .. actor.recordId .. " from combatants table")
+  common.debugMePls("Removed " .. actor.recordId .. " from combatants table")
 end
 
 local function startNextTurn()
-  combatants[1]:sendEvent('isMyTurn')
-  debugMePls("Sending Turn Init to: " .. combatants[1].recordId)
+  combatants[1]:sendEvent('isMyTurn', combatants)
+  common.debugMePls("Sending Turn Init to: " .. combatants[1].recordId)
 end
 
 local function switchTurn()
-  debugMePls("Combatants table prior to turn shift: \n" .. aux_util.deepToString(combatants, 2))
+  if #combatants == 1 then return end
+  common.debugMePls("Combatants table prior to turn shift: \n" .. aux_util.deepToString(combatants, 2))
   setNextInTurnOrder()
-  debugMePls("Combatants table after turn shift: \n" .. aux_util.deepToString(combatants, 2))
+  common.debugMePls("Combatants table after turn shift: \n" .. aux_util.deepToString(combatants, 2))
   startNextTurn()
 end
 
 local function declareFightStart(enemyInfo)
   getPlayer():sendEvent('declareFight', enemyInfo.ai)
 
-  debugMePls("Combatants table prior to adding actor: \n" .. aux_util.deepToString(combatants, 2))
+  common.debugMePls("Combatants table prior to adding actor: \n" .. aux_util.deepToString(combatants, 2))
 
   -- Newly added actors will take their turns first, so let's put them at the top. Otherwise,
   -- They take two turns when the turn shift occurs.
   table.insert(combatants, 1, enemyInfo.origin)
 
-  debugMePls("Combatants table after adding actor: \n" .. aux_util.deepToString(combatants, 2))
+  common.debugMePls("Combatants table after adding actor: \n" .. aux_util.deepToString(combatants, 2))
 
 end
 
