@@ -133,8 +133,8 @@ end
 
 -- for now, this doesn't take into account possible other combatants.
 -- A global script should control the round order.
-local function initiateCombat(origin)
-  lastTarget = origin
+local function initiateCombat(combatants)
+  lastTarget = combatants[#combatants]
   if lastTarget then
     uiLib.showMessage("You were attacked by " .. lastTarget.recordId .. "!")
   end
