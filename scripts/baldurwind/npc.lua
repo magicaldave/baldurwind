@@ -9,30 +9,27 @@ local didAttack = false
 local hasStartedCombat = false
 local hasDied = false
 local isMyTurn = true
+local isCurrentCompanion = false
 local combatants = {}
 
 -- end their turn if not types.Actor.canMove(self)
 
 local function getPlayer()
-
   for _, actor in ipairs(nearby.actors) do
     if actor.type == types.Player then
       return actor
     end
   end
-
 end
 
-local function startTurn(combatants)
-  combatants = combatants
-  self:enableAI(true)
-  isMyTurn = true
+local function sendEndTurn()
+  core.sendGlobalEvent('endTurn', {lastActor = self.object, reason = "endTurn"})
 end
 
 local function endTurn()
   self:enableAI(false)
   isMyTurn = false
-  core.sendGlobalEvent('endTurn', {lastActor = self.object, reason = "endTurn"})
+  sendEndTurn()
 end
 
 local function isInCombat()
@@ -40,7 +37,9 @@ local function isInCombat()
 
   -- What happens when they try to flee??
 
-  if not currentPackage or currentPackage.type ~= "Combat" then return false end
+  if not currentPackage then return false end
+
+  if currentPackage.type ~= "Combat" then return false end
 
   if not types.Actor.canMove(self) then
     endTurn()
@@ -51,11 +50,49 @@ local function isInCombat()
 
 end
 
+local function startTurn(combatants)
+
+  combatants = combatants
+
+  self:enableAI(true)
+
+  -- if isCurrentCompanion and not isInCombat() then
+  --   sendEndTurn()
+  --   return
+  -- end
+  isMyTurn = true
+end
+
+local function endCombat()
+
+end
+
+local function isCompanion()
+  if isCurrentCompanion then return end
+
+  local currentPackage = ai.getActivePackage(self)
+
+  if not currentPackage or types.Actor.stats.dynamic["health"](self).current <= 0 then return false end
+
+  if currentPackage.type ~= "Follow" and
+    currentPackage.target ~= "player" and
+    currentPackage.sideWithTarget ~= true then return false end
+
+  core.sendGlobalEvent('addFriendlyCombatant', self)
+
+  isCurrentCompanion = true
+
+end
+
 local function checkCombatTarget(aiData)
   if hasStartedCombat then return end
 
+  hasStartedCombat = true
+
+  if isCurrentCompanion then return end
+
   -- Fix this later, when accounting for companions
-  if aiData.target.recordId ~= "player" then return end
+  -- if aiData.target.recordId ~= "player" then return end
 
   local combatData = {
     aiTarget = aiData.target,
@@ -65,10 +102,13 @@ local function checkCombatTarget(aiData)
 
   core.sendGlobalEvent('combatInitiated', {ai = combatData, origin = self.object})
 
-  hasStartedCombat = true
 end
 
+
+
 local function wasKilled()
+  if not hasStartedCombat then return false end
+
   if hasDied then return true end
 
   local health = types.Actor.stats.dynamic["health"](self).current
@@ -83,11 +123,15 @@ local function wasKilled()
 end
 
 local function doAttack(dt)
+  isCompanion()
+
+  local died = wasKilled()
+
   if not isMyTurn then return end
 
   local aiData = isInCombat()
 
-  if wasKilled() or not aiData then return end
+  if died or not aiData then return end
 
   checkCombatTarget(aiData)
 
@@ -112,6 +156,16 @@ return {
     onUpdate = doAttack,
   },
   eventHandlers = {
-    isMyTurn = startTurn
+    isMyTurn = startTurn,
+    isNotMyTurn = function()
+      self:enableAI(false)
+      isMyTurn = false
+    end,
+    endCombat = function()
+      self:enableAI(true)
+      isMyTurn = false
+      hasStartedCombat = false
+      didAttack = false
+    end
   }
 }

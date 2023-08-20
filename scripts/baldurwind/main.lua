@@ -2,6 +2,7 @@ local world = require('openmw.world')
 local types = require('openmw.types')
 local async = require('openmw.async')
 local aux_util = require('openmw_aux.util')
+local ai = require('openmw.interfaces').AI
 local common = require('scripts.baldurwind.common')
 
 --table including all actors in combat
@@ -9,6 +10,15 @@ local common = require('scripts.baldurwind.common')
 -- for now creatures are not technically affected though.
 -- How do we determine combatants?
 local combatants = {}
+local enemies = {}
+local party = {}
+
+local function targetInTable(targetObject, targetTable)
+  for _, ref in ipairs(targetTable) do
+    if (ref == targetObject) then return true end
+  end
+  return false
+end
 
 local function getPlayer()
   for _, ref in ipairs(world.activeActors) do
@@ -28,7 +38,7 @@ end
 
 local function hasActiveEnemyCombatants()
   for _, ref in ipairs(combatants) do
-    if (ref.type ~= types.Player) then -- Add an additional check here for non-hostile actors
+    if not targetInTable(ref, party) then
       return true
     end
   end
@@ -46,8 +56,15 @@ local function removeFromTurnOrder(actor)
 end
 
 local function startNextTurn()
+  if not hasActiveEnemyCombatants then return end
   combatants[1]:sendEvent('isMyTurn', combatants)
   common.debugMePls("Sending Turn Init to: " .. combatants[1].recordId)
+end
+
+local function sendEventToParty(eventName)
+  for _, partyMember in ipairs(party) do
+    partyMember:sendEvent(eventName)
+  end
 end
 
 local function switchTurn()
@@ -59,16 +76,24 @@ local function switchTurn()
 end
 
 local function declareFightStart(enemyInfo)
-  getPlayer():sendEvent('declareFight', enemyInfo.ai)
+  local enemy = enemyInfo.origin
+
+  if not targetInTable(enemy, party) then
+    table.insert(enemies, enemy)
+  end
 
   common.debugMePls("Combatants table prior to adding actor: \n" .. aux_util.deepToString(combatants, 2))
 
   -- Newly added actors will take their turns first, so let's put them at the top. Otherwise,
   -- They take two turns when the turn shift occurs.
-  table.insert(combatants, 1, enemyInfo.origin)
+
+  if not targetInTable(enemy, combatants) then
+    table.insert(combatants, 1, enemy)
+  end
 
   common.debugMePls("Combatants table after adding actor: \n" .. aux_util.deepToString(combatants, 2))
 
+  sendEventToParty('isNotMyTurn')
 end
 
 local function combatantDied(actor)
@@ -78,11 +103,13 @@ local function combatantDied(actor)
   -- Unless there are no enemies to keep fighting!
   if hasActiveEnemyCombatants() then startNextTurn() return end
 
-  getPlayer():sendEvent('declareFightEnd')
+  sendEventToParty('endCombat')
+
 end
 
 local function initializeCombatants(player)
   table.insert(combatants, player)
+  table.insert(party, player)
   -- I suppose this is where, on load, we should figure out whether a fight was in progress or not.
   -- That'll be fun.
 end
@@ -91,6 +118,7 @@ return {
     interfaceName = 's3turnsmain',
     interface = {
       combatants = combatants,
+      party = party,
       version = 001,
     },
     engineHandlers = {
@@ -98,8 +126,14 @@ return {
     },
     eventHandlers = {
       endTurn = switchTurn,
-      -- onLoad = initializeCombatants,
       combatInitiated = declareFightStart,
+      addFriendlyCombatant = function(source)
+        if not targetInTable(source, combatants) then
+          table.insert(party, source)
+          table.insert(combatants, source)
+          print("Added actor to friendlies from addFriendlyCombatant function")
+        end
+      end,
       combatantDied = combatantDied
     }
 }

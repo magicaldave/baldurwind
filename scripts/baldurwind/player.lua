@@ -165,14 +165,15 @@ local function declareFight(origin)
 
   if not debug then return end
 
-  uiLib.showMessage(origin.source.recordId
-                    .. " has ai package: " .. origin.aiType
-                    .. " and is targeting " .. origin.aiTarget.recordId .. "!")
+  -- uiLib.showMessage(origin.source.recordId
+  --                   .. " has ai package: " .. origin.aiType
+  --                   .. " and is targeting " .. origin.aiTarget.recordId .. "!")
 end
 
 local function declareFightEnd()
   isInCombat = false
-  beginTurn()
+  switchControls(true)
+  -- beginTurn()
 end
 
 local function onFrame(dt)
@@ -192,8 +193,7 @@ return {
   },
   eventHandlers = {
     isMyTurn = initiateCombat,
-    notMyTurn = playerEndTurn,
-    declareFight = declareFight,
-    declareFightEnd = declareFightEnd
+    isNotMyTurn = declareFight,
+    endCombat = declareFightEnd
   }
 }
