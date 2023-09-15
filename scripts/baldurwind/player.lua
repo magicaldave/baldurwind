@@ -89,6 +89,22 @@ local function endAttackEvent(currentTurnAttackDelay)
   didAttack = true
 end
 
+local function isUsingWeapon()
+  local playerStance = types.Actor.stance(self)
+
+  if playerStance == types.Actor.STANCE.Weapon then return true end
+
+  return false
+end
+
+local function getAttackDelay()
+  if isUsingWeapon() then
+    return attackDelayTimer + (math.random(1, attackDelayTimerUpperRange) / 100)
+  end
+
+  return attackDelayTimer + .45
+end
+
 local function startAttackEvent()
 
   if types.Actor.stance(self) == types.Actor.STANCE.Nothing then return end
@@ -96,7 +112,7 @@ local function startAttackEvent()
   startAttack()
 
   -- ranged/magic should have a much longer timer, so they're able to properly hit the target
-  local currentTurnAttackDelay = attackDelayTimer + (math.random(1, attackDelayTimerUpperRange) / 100)
+  local currentTurnAttackDelay = getAttackDelay()
 
   -- Ranged weapons shouldn't have timed attacks
   if canTimedAttack then handleTimedAttack(currentTurnAttackDelay) end
