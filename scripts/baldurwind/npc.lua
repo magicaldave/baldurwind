@@ -26,7 +26,7 @@ local function sendEndTurn()
   core.sendGlobalEvent('endTurn', {lastActor = self.object, reason = "endTurn"})
 end
 
-local function endTurn()
+local function NPCEndTurn()
   self:enableAI(false)
   isMyTurn = false
   sendEndTurn()
@@ -42,7 +42,7 @@ local function isInCombat()
   if currentPackage.type ~= "Combat" then return false end
 
   if not types.Actor.canMove(self) then
-    endTurn()
+    NPCEndTurn()
     return false
   end
 
@@ -147,7 +147,7 @@ local function doAttack(dt)
   if not didAttack then return end
 
   didAttack = false
-  endTurn()
+  NPCEndTurn()
 
 end
 
