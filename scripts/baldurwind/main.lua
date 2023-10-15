@@ -12,6 +12,9 @@ local common = require('scripts.baldurwind.common')
 local combatants = {}
 local enemies = {}
 local party = {}
+local const = {
+  TURNSWITCHRANGE = 750
+}
 
 local function targetInTable(targetObject, targetTable)
   for _, ref in ipairs(targetTable) do
