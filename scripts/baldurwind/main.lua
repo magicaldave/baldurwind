@@ -13,7 +13,8 @@ local combatants = {}
 local enemies = {}
 local party = {}
 local const = {
-  TURNSWITCHRANGE = 750
+  TURNSWITCHRANGE = 750,
+  TURNEXPIRETIME = 6.0,
 }
 
 local function targetInTable(targetObject, targetTable)
