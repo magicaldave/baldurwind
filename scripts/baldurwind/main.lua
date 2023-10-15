@@ -64,8 +64,8 @@ local function startNextTurn()
   common.debugMePls("Sending Turn Init to: " .. combatants[1].recordId)
 end
 
-local function sendEventToParty(eventName)
-  for _, partyMember in ipairs(party) do
+local function sendEventToGroup(eventName, groupName)
+  for _, partyMember in ipairs(groupName) do
     partyMember:sendEvent(eventName)
   end
 end
@@ -99,7 +99,7 @@ local function declareFightStart(enemyInfo)
 
   if ( player.position - enemy.position ):length() > const.TURNSWITCHRANGE then return end
 
-  sendEventToParty('isNotMyTurn')
+  sendEventToGroup('isNotMyTurn', party)
 end
 
 local function combatantDied(actor)
@@ -109,7 +109,7 @@ local function combatantDied(actor)
   -- Unless there are no enemies to keep fighting!
   if hasActiveEnemyCombatants() then startNextTurn() return end
 
-  sendEventToParty('endCombat')
+  sendEventToGroup('endCombat', party)
 
 end
 
