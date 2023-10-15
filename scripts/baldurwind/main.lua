@@ -79,6 +79,7 @@ local function switchTurn()
 end
 
 local function declareFightStart(enemyInfo)
+  local player = getPlayer()
   local enemy = enemyInfo.origin
 
   if not targetInTable(enemy, party) then
@@ -95,6 +96,8 @@ local function declareFightStart(enemyInfo)
   end
 
   common.debugMePls("Combatants table after adding actor: \n" .. aux_util.deepToString(combatants, 2))
+
+  if ( player.position - enemy.position ):length() > const.TURNSWITCHRANGE then return end
 
   sendEventToParty('isNotMyTurn')
 end
