@@ -77,6 +77,18 @@ local function switchTurn()
   setNextInTurnOrder()
   common.debugMePls("Combatants table after turn shift: \n" .. aux_util.deepToString(combatants, 2))
   startNextTurn()
+  -- When we switch turns
+  -- startNextTurn returns the actor whose turn it is
+  -- An async timer fires a function which checks if combatants[1] == provided actor
+  -- If so we run switchTurn and display a message
+  local previousActor = combatants[1]
+  async:newUnsavableSimulationTimer(const.TURNEXPIRETIME, function()
+				      if previousActor ~= combatants[1] then return end
+				      switchTurn()
+				      previousActor:sendEvent("isNotMyTurn")
+				      common.debugMePls(previousActor.recordId .. "'s turn was force-expired!")
+				      end
+  )
 end
 
 local function declareFightStart(enemyInfo)
